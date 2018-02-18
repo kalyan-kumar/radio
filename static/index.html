@@ -18,5 +18,10 @@
             <input type="url" name="videoToAdd" placeholder="Enter Youtube Link to add to queue">
             <input type="submit" value="Add to Queue">
         </form>
+
+        {{range .Queue}}
+            {{.Name}}<br/>
+        {{end}}
+
     </body>
 </html>

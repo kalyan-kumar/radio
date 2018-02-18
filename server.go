@@ -7,22 +7,33 @@ import (
 	//"github.com/gorilla/websocket"
 )
 
-type pageParameters struct {
+type playingSong struct {
+	Id       string
+	Position int
+}
 
+type videoDetails struct {
+	Id string
+	Name string
+}
+
+type pageParameters struct {
+	ToPlay playingSong
+	Queue []videoDetails
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	//title := r.URL.Path
 
 	t, _ := template.ParseFiles("static/index.html")
-	t.Execute(w, pageParameters{})
+	t.Execute(w, pageParameters{Queue:[]videoDetails{{Name:"Bob Dylan"}, {Name:"Skylar Grey"}}})
 }
 
 func scriptHandler(w http.ResponseWriter, r *http.Request) {
 	//title := r.URL.Path
 
 	t, _ := template.ParseFiles("js/youtube-api.js")
-	t.Execute(w, pageParameters{})
+	t.Execute(w, pageParameters{ToPlay:playingSong{Id:"GDQob4AOCsQ", Position:30}})
 }
 
 func main() {

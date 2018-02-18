@@ -4,7 +4,10 @@ function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
         height: '480',
         width: '854',
-        videoId: 'GDQob4AOCsQ',
+        videoId: '{{.ToPlay.Id}}',
+        playerVars: {
+            start: '{{.ToPlay.Position}}'
+        },
         events: {
             onReady: onPlayerReady,
             onStateChange: onPlayerStateChange
