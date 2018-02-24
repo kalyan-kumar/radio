@@ -9,19 +9,20 @@
     <body>
         <pre>W0rkInPr0gr3ss</pre>
 
-        <script type="text/javascript" src="script"></script>
+        <script type="text/javascript" src="ytapi"></script>
+        <script type="text/javascript" src="sockapi"></script>
         <script type="text/javascript" src="https://www.youtube.com/iframe_api"></script>
 
         <div id="player"></div>
 
-        <form action="/addToQueue" method="post">
-            <input type="url" name="videoToAdd" placeholder="Enter Youtube Link to add to queue">
-            <input type="submit" value="Add to Queue">
-        </form>
+        <input id="inputBox" type="url" name="videoToAdd" placeholder="Enter Youtube Link to add to queue">
+        <input type="submit" value="Add to Queue" onclick="sendUserInput()">
 
+        <ul id="songsQueue">
         {{range .Queue}}
-            {{.Name}}<br/>
+            <li>{{.Name}}</li>
         {{end}}
+        </ul>
 
     </body>
 </html>
