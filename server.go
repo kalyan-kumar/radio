@@ -30,14 +30,14 @@ func sockapiHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	//http.Handle("/script", http.StripPrefix("/script", http.FileServer(http.Dir("js/youtube-api.js"))))
 
-	clients := radio.NewClientList()
-	go clients.PopulateQueue()
-	go clients.Synchronize()
+	jockey := radio.NewJockey([]string{"hCQhRDvayos", "0z8wohG5mqI"})
+	go jockey.PopulateQueue()
+	go jockey.Synchronize()
 
 	http.HandleFunc("/radio", viewHandler)
-	http.HandleFunc("/ytapi", ytapiHandler)
+	http.HandleFunc("/ytapi", jockey.JukeBox.InitializePlayer)
 	http.HandleFunc("/sockapi", sockapiHandler)
-	http.HandleFunc("/websocket", clients.Connect)
+	http.HandleFunc("/websocket", jockey.Connect)
 
 	http.ListenAndServe(":8042", nil)
 }
