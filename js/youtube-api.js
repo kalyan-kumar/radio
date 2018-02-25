@@ -1,10 +1,12 @@
+var player;
+
 function onYouTubeIframeAPIReady() {
-    new YT.Player('player', {
+    player = new YT.Player('player', {
         height: '480',
         width: '854',
-        videoId: '{{.ToPlay.Id}}',
+        videoId: '{{.Id}}',
         playerVars: {
-            start: '{{.ToPlay.Position}}',
+            start: '{{.Position}}',
             controls: 0,
             disablekb: 1,
             rel: 0
@@ -24,9 +26,15 @@ function onPlayerReady(event) {
 function onPlayerStateChange(event) {
     console.log("Player state - " + event.data);
     if (event.data === YT.PlayerState.ENDED) {
-
+        informCompletion();
     }
 }
+
+function playVideo(Id) {
+    console.log("Will play song - " + Id);
+    player.loadVideoById({videoId: Id});
+}
+
 function stopVideo(player) {
     console.log("Player being stopped");
     player.stopVideo();
