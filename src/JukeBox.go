@@ -13,6 +13,11 @@ type JukeBox struct {
 	startTime time.Time
 }
 
+func (jukeBox *JukeBox) LoadPage(w http.ResponseWriter, r *http.Request) {
+	t, _ := template.ParseFiles("static/index.html")
+	t.Execute(w, PlayList{SongList: jukeBox.songs})
+}
+
 func (jukeBox *JukeBox) InitializePlayer(w http.ResponseWriter, r *http.Request) {
 	t, _ := template.ParseFiles("js/youtube-api.js")
 

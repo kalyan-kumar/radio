@@ -11,3 +11,7 @@ type PlayingSong struct {
 	Id       string
 	Position int
 }
+
+type PlayList struct {
+	SongList []string
+}

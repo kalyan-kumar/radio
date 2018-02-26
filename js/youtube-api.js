@@ -27,6 +27,8 @@ function onPlayerStateChange(event) {
     console.log("Player state - " + event.data);
     if (event.data === YT.PlayerState.ENDED) {
         informCompletion();
+    } else if (event.data === YT.PlayerState.PAUSED) {
+        player.playVideo();
     }
 }
 

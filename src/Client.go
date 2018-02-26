@@ -6,18 +6,18 @@ import (
 )
 
 type Client struct {
-	Handle   string
-	Id       int
-	Endpoint *websocket.Conn
+	handle   string
+	id       int
+	endpoint *websocket.Conn
 }
 
 func (client Client) Listen(queue chan string, close chan int, syncer chan int) {
 	fmt.Println("Running Listener ...")
 	for {
-		messageType, data, err := client.Endpoint.ReadMessage()
+		messageType, data, err := client.endpoint.ReadMessage()
 		if err != nil {
 			fmt.Println("Error on reading socket. Closing the listener.")
-			close <- client.Id
+			close <- client.id
 			break
 		}
 		fmt.Println(data)

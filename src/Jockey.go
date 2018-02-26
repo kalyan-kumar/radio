@@ -9,6 +9,8 @@ import (
 	//"sync"
 	"encoding/json"
 	"time"
+	//"google.golang.org/api/googleapi/transport"
+	//"google.golang.org/api/youtube/v3"
 )
 
 type Jockey struct {
@@ -33,7 +35,7 @@ func NewJockey(songList []string) *Jockey {
 		JukeBox: JukeBox{songs: songList, position: 0, startTime: time.Now()}}
 }
 
-func (clients *Jockey) Connect(w http.ResponseWriter, r *http.Request) {
+func (jockey *Jockey) Connect(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("New Connection")
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -46,40 +48,46 @@ func (clients *Jockey) Connect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newClient := Client{Endpoint: conn}
+	newClient := Client{id: jockey.newId, endpoint: conn}
 
 	closeChannel := make(chan int)
-	go newClient.Listen(clients.queue, closeChannel, clients.syncer)
-	go clients.Disconnect(closeChannel)
+	go newClient.Listen(jockey.queue, closeChannel, jockey.syncer)
+	go jockey.Disconnect(closeChannel)
 
-	lock := <-clients.mutex
-	clients.Clients[clients.newId] = newClient
-	clients.newId ++
-	clients.mutex <- lock
+	lock := <-jockey.mutex
+	jockey.Clients[jockey.newId] = newClient
+	jockey.newId ++
+	jockey.mutex <- lock
 
-	fmt.Println(clients.newId)
+	fmt.Println("ClientId - %d", jockey.newId)
 }
 
-func (clients *Jockey) Disconnect(close chan int) {
+func (jockey *Jockey) Disconnect(close chan int) {
 	index := <-close
-	lock := <-clients.mutex
-	delete(clients.Clients, index)
-	clients.mutex <- lock
+	lock := <-jockey.mutex
+	delete(jockey.Clients, index)
+	jockey.mutex <- lock
 }
 
-func (clients *Jockey) PopulateQueue() {
+func (jockey *Jockey) PopulateQueue() {
 	fmt.Println("Reading input channel ...")
 	for {
-		v := <-clients.queue
-		fmt.Println("One of the clients entered - " + v)
-		msg, err := json.Marshal(Message{Kind: "Title", Value: "v"})
+		mediaId := <-jockey.queue
+		fmt.Println("One of the clients entered - " + mediaId)
+
+		jukebox := &(jockey.JukeBox)
+		jukebox.songs = append(jukebox.songs, mediaId)
+
+		fmt.Println(jockey.JukeBox.songs)
+
+		msg, err := json.Marshal(Message{Kind: "Title", Value: mediaId})
 		if err != nil {
 			fmt.Println("Unable to form response JSON.")
 			msg = []byte("Surprise Song!!")
 		}
 
-		for _, client := range clients.Clients {
-			client.Endpoint.WriteMessage(websocket.TextMessage, msg)
+		for _, client := range jockey.Clients {
+			client.endpoint.WriteMessage(websocket.TextMessage, msg)
 		}
 	}
 }
@@ -88,13 +96,14 @@ func (jockey *Jockey) Synchronize() {
 	for {
 		<-jockey.syncer
 
-		jukeBox := jockey.JukeBox
+		jukeBox := &(jockey.JukeBox)
 		msg := jukeBox.getNextSong()
 
-		fmt.Println("Sending next song to all clients")
+		time.Sleep(5 * time.Second)
+
+		fmt.Println("Sending next song to all clients %s", string(msg[:]))
 		for _, client := range jockey.Clients {
-			//dummy, _ := json.Marshal(Message{Kind: "Song", Value: "0z8wohG5mqI"})
-			client.Endpoint.WriteMessage(websocket.TextMessage, []byte(msg))
+			client.endpoint.WriteMessage(websocket.TextMessage, []byte(msg))
 		}
 
 		jukeBox.startTime = time.Now()
@@ -112,3 +121,18 @@ func (jukeBox *JukeBox) getNextSong() []byte {
 		return msg
 	}
 }
+
+
+//func getTitle(id string) string {
+//	client := &http.Client{
+//		Transport: &transport.APIKey{Key: "AIzaSyCS-TiDxUSVGLuQfIyMHlhUdG9wiFu8d_A"},
+//	}
+//
+//	service, err := youtube.New(client)
+//	if err != nil {
+//		fmt.Println("Error creating new YouTube client: %v", err)
+//		return id
+//	}
+//
+//	service.Sea
+//}

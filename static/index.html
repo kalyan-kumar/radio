@@ -19,8 +19,8 @@
         <input type="submit" value="Add to Queue" onclick="sendUserInput()">
 
         <ul id="songsQueue">
-        {{range .Queue}}
-            <li>{{.Name}}</li>
+        {{range $index, $element := .SongList}}
+            <li>{{$element}}</li>
         {{end}}
         </ul>
 
