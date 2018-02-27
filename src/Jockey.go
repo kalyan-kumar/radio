@@ -9,8 +9,8 @@ import (
 	//"sync"
 	"encoding/json"
 	"time"
-	//"google.golang.org/api/googleapi/transport"
-	//"google.golang.org/api/youtube/v3"
+	"google.golang.org/api/googleapi/transport"
+	"google.golang.org/api/youtube/v3"
 )
 
 type Jockey struct {
@@ -72,22 +72,27 @@ func (jockey *Jockey) Disconnect(close chan int) {
 func (jockey *Jockey) PopulateQueue() {
 	fmt.Println("Reading input channel ...")
 	for {
-		mediaId := <-jockey.queue
-		fmt.Println("One of the clients entered - " + mediaId)
+		query := <-jockey.queue
+		fmt.Println("One of the clients entered - " + query)
 
-		jukebox := &(jockey.JukeBox)
-		jukebox.songs = append(jukebox.songs, mediaId)
+		id, title, image := getIdAndTitle(query)
 
-		fmt.Println(jockey.JukeBox.songs)
+		if "" == id {
+			continue
+		}
 
-		msg, err := json.Marshal(Message{Kind: "Title", Value: mediaId})
+		jukeBox := &(jockey.JukeBox)
+		jukeBox.songs = append(jukeBox.songs, id)
+		fmt.Println(jukeBox.songs)
+
+		response, err := json.Marshal(Message{Kind: "Title", Value: id + "," + title + "," + image})
 		if err != nil {
 			fmt.Println("Unable to form response JSON.")
-			msg = []byte("Surprise Song!!")
+			response = []byte("Surprise Song!!")
 		}
 
 		for _, client := range jockey.Clients {
-			client.endpoint.WriteMessage(websocket.TextMessage, msg)
+			client.endpoint.WriteMessage(websocket.TextMessage, response)
 		}
 	}
 }
@@ -123,16 +128,22 @@ func (jukeBox *JukeBox) getNextSong() []byte {
 }
 
 
-//func getTitle(id string) string {
-//	client := &http.Client{
-//		Transport: &transport.APIKey{Key: "AIzaSyCS-TiDxUSVGLuQfIyMHlhUdG9wiFu8d_A"},
-//	}
-//
-//	service, err := youtube.New(client)
-//	if err != nil {
-//		fmt.Println("Error creating new YouTube client: %v", err)
-//		return id
-//	}
-//
-//	service.Sea
-//}
+func getIdAndTitle(query string) (string, string, string) {
+	client := &http.Client{
+		Transport: &transport.APIKey{Key: ""},
+	}
+
+	service, err := youtube.New(client)
+	if err != nil {
+		fmt.Println("Error creating new YouTube client: %v", err)
+		return "", "", ""
+	}
+
+	response, err := service.Search.List("snippet").MaxResults(1).Q(query).Do()
+	if err != nil {
+		fmt.Println("Error creating new YouTube client: %v", err)
+		return "", "", ""
+	}
+
+	return response.Items[0].Id.VideoId, response.Items[0].Snippet.Title, response.Items[0].Snippet.Thumbnails.Default.Url
+}

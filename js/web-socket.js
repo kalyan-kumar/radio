@@ -27,11 +27,17 @@ ws.onmessage = function (event) {
 };
 
 function appendToQueue(title) {
+    var res = title.split(',');
+
+    var img = document.createElement("IMG");
+    img.setAttribute("src", res[2]);
+
     var entry = document.createElement("li");
-    entry.appendChild(document.createTextNode(title));
+    entry.appendChild(document.createTextNode(res[1]));
+    entry.appendChild(img);
 
     if (YT.PlayerState.PLAYING !== player.getPlayerState()) {
-        playVideo(title);
+        playVideo(res[0]);
     }
 
     document.getElementById("songsQueue").appendChild(entry);
