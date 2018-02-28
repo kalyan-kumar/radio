@@ -20,11 +20,10 @@ func (client Client) Listen(queue chan string, close chan int, syncer chan int) 
 			close <- client.id
 			break
 		}
-		fmt.Println(data)
 
 		if messageType == websocket.TextMessage {
 			inputString := string(data[:])
-			fmt.Println("Received input - " + inputString)
+			fmt.Println("One of the clients entered - " + inputString)
 
 			if "Finished" == inputString {
 				select {
@@ -34,12 +33,14 @@ func (client Client) Listen(queue chan string, close chan int, syncer chan int) 
 					fmt.Println("Nothing to do")
 				}
 			} else {
-
-				//m, _ := regexp.MatchString("^https://youtube\\.com/", inputString)
-				//if m {
-				queue <- inputString
+				if "" != inputString {
+					/*
+					The condition is needed as clicking Add to Queue with nothing input is causing the
+					YouTube API to send a random song. Need to check why.
+					 */
+					queue <- inputString
+				}
 			}
-			//}
 		}
 	}
 }

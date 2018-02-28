@@ -20,7 +20,7 @@
 
         <ul id="songsQueue">
         {{range $index, $element := .SongList}}
-            <li>{{$element}}</li>
+            <li>{{$element.Title}}<img src="{{$element.Image}}"/></li>
         {{end}}
         </ul>
 

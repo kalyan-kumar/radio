@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"html/template"
 	"github.com/kalyan-kumar/radio/src"
+	"bufio"
+	"os"
 )
 
 func sockapiHandler(w http.ResponseWriter, r *http.Request) {
@@ -13,10 +15,13 @@ func sockapiHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Sending sockapi")
 }
 
-func main() {
-	//http.Handle("/script", http.StripPrefix("/script", http.FileServer(http.Dir("js/youtube-api.js"))))
+/*
+Syncing can instead be done by having song length in the server. It would give better experience
+and solve the problem easily.
+*/
 
-	jockey := radio.NewJockey([]string{"h06uzVCFsoE"})
+func main() {
+	jockey := radio.NewJockey([]radio.Song{})
 	go jockey.PopulateQueue()
 	go jockey.Synchronize()
 

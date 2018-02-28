@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"net/http"
-	//"bytes"
-	//"regexp"
-	//"sync"
 	"encoding/json"
 	"time"
 	"google.golang.org/api/googleapi/transport"
 	"google.golang.org/api/youtube/v3"
 )
+
+/*
+Extract out the channel data into a synchronizer data structure.
+*/
 
 type Jockey struct {
 	newId   int
@@ -22,9 +23,14 @@ type Jockey struct {
 	JukeBox JukeBox
 }
 
-func NewJockey(songList []string) *Jockey {
+func NewJockey(songList []Song) *Jockey {
 	mutex := make(chan int, 1)
 	mutex <- 1
+
+	jukeBoxMutex := make(chan bool, 1)
+	jukeBoxMutex <- false
+
+	length := len(songList)
 
 	return &Jockey{
 		newId:   0,
@@ -32,7 +38,7 @@ func NewJockey(songList []string) *Jockey {
 		mutex:   mutex,
 		syncer:  make(chan int),
 		Clients: make(map[int]Client),
-		JukeBox: JukeBox{songs: songList, position: 0, startTime: time.Now()}}
+		JukeBox: JukeBox{songs: songList, position: length - 1, startTime: time.Now(), ended: length == 0, mutex: jukeBoxMutex}}
 }
 
 func (jockey *Jockey) Connect(w http.ResponseWriter, r *http.Request) {
@@ -73,18 +79,29 @@ func (jockey *Jockey) PopulateQueue() {
 	fmt.Println("Reading input channel ...")
 	for {
 		query := <-jockey.queue
-		fmt.Println("One of the clients entered - " + query)
+		fmt.Println("API query string - " + query)
 
 		id, title, image := getIdAndTitle(query)
-
 		if "" == id {
 			continue
 		}
 
-		jukeBox := &(jockey.JukeBox)
-		jukeBox.songs = append(jukeBox.songs, id)
-		fmt.Println(jukeBox.songs)
+		song := Song{Id: id, Title: title, Image: image}
 
+		jukeBox := &(jockey.JukeBox)
+		lock := <-jukeBox.mutex
+		jukeBox.songs = append(jukeBox.songs, song)
+		jukeBox.mutex <- lock
+
+		fmt.Println("Queue size - %d", len(jukeBox.songs))
+
+		if jukeBox.ended {
+			jockey.syncer <- 1
+		}
+
+		/*
+		Form a JSON here, instead of sending a comma separated string.
+		 */
 		response, err := json.Marshal(Message{Kind: "Title", Value: id + "," + title + "," + image})
 		if err != nil {
 			fmt.Println("Unable to form response JSON.")
@@ -102,7 +119,9 @@ func (jockey *Jockey) Synchronize() {
 		<-jockey.syncer
 
 		jukeBox := &(jockey.JukeBox)
+		lock := <-jukeBox.mutex
 		msg := jukeBox.getNextSong()
+		jukeBox.mutex <- lock
 
 		time.Sleep(5 * time.Second)
 
@@ -111,22 +130,24 @@ func (jockey *Jockey) Synchronize() {
 			client.endpoint.WriteMessage(websocket.TextMessage, []byte(msg))
 		}
 
+		lock = <-jukeBox.mutex
 		jukeBox.startTime = time.Now()
+		jukeBox.mutex <- lock
 	}
 }
 
 func (jukeBox *JukeBox) getNextSong() []byte {
 	if (jukeBox.position + 1) == len(jukeBox.songs) {
+		jukeBox.ended = true
 		msg, _ := json.Marshal(Message{Kind: "Finished"})
 		return msg
 	} else {
 		jukeBox.position ++
-
-		msg, _ := json.Marshal(Message{Kind: "Song", Value: jukeBox.songs[jukeBox.position]})
+		jukeBox.ended = false
+		msg, _ := json.Marshal(Message{Kind: "Song", Value: jukeBox.songs[jukeBox.position].Id})
 		return msg
 	}
 }
-
 
 func getIdAndTitle(query string) (string, string, string) {
 	client := &http.Client{

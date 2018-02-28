@@ -36,10 +36,6 @@ function appendToQueue(title) {
     entry.appendChild(document.createTextNode(res[1]));
     entry.appendChild(img);
 
-    if (YT.PlayerState.PLAYING !== player.getPlayerState()) {
-        playVideo(res[0]);
-    }
-
     document.getElementById("songsQueue").appendChild(entry);
 }
 

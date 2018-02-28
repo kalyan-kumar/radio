@@ -13,5 +13,5 @@ type PlayingSong struct {
 }
 
 type PlayList struct {
-	SongList []string
+	SongList []Song
 }
