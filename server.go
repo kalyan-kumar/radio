@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"html/template"
 	"github.com/kalyan-kumar/radio/src"
-	"bufio"
-	"os"
 )
 
 func sockapiHandler(w http.ResponseWriter, r *http.Request) {
